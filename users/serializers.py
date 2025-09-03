@@ -19,6 +19,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'password': {'write_only': True},
             'username': {'required': True},
             'email': {'required': True},
+            'code': {'write_only': True},
         }
 
     def validate(self, data):
@@ -53,3 +54,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         verification_record.save()
         
         return user
+    
+
+class UserMeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = ['is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions','last_login', 'date_joined']
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'role': {'read_only': True},
+        }
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        instance = super().update(instance, validated_data)
+        if password:
+            instance.set_password(password)
+            instance.save()
+            
+        return instance
