@@ -6,6 +6,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('api/auth/', include('users.urls', namespace='users')),
+    path('api/hotels/', include('hotels.urls', namespace='hotels')),
     
 
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

@@ -9,3 +9,4 @@ celery
 redis
 psycopg2-binary
 django-redis
+drf-nested-routers
