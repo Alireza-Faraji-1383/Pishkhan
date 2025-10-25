@@ -2,12 +2,15 @@ from rest_framework import viewsets, mixins, status, permissions , filters
 from rest_framework.decorators import action
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
 
 from core.utils.responses import StandardResponse
 from core.mixins import StandardResponseMixin
+from hotels.permissions import IsHotelAdmin
+from core.permissions import IsOwner
 
 from .models import Hotel, Reservation, RoomType
-from .serializers import HotelPreViewSerializer, HotelSerializer, ReservationSerializer, CreateReservationSerializer, RoomTypeSerializer
+from .serializers import HotelPreViewSerializer, HotelSerializer, ReservationSerializer, CreateReservationSerializer, RoomTypeCreateSerializer, RoomTypeSerializer
 
 
 class ReservationViewSet(StandardResponseMixin,mixins.CreateModelMixin,
@@ -97,3 +100,26 @@ class RoomTypeViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [ filters.SearchFilter, filters.OrderingFilter ]
     search_fields = ['name', 'hotel__name', 'hotel__city']
     ordering_fields = ['price_per_night', 'capacity']
+
+
+
+class HotelAdminViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsHotelAdmin]
+    serializer_class = HotelSerializer
+
+    def get_queryset(self):
+        return Hotel.objects.filter(owner=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+class RoomTypeAdminViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsHotelAdmin]
+    serializer_class = RoomTypeCreateSerializer
+
+    def get_queryset(self):
+        return RoomType.objects.filter(hotel__owner=self.request.user).select_related('hotel')
+    
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)

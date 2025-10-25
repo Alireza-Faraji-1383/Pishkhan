@@ -38,15 +38,15 @@ class CreateReservationSerializer(serializers.Serializer):
         except RoomType.DoesNotExist:
             raise serializers.ValidationError("نوع اتاق مورد نظر یافت نشد.")
 
-        overlapping_reservations = Reservation.objects.filter(
-            room_type=room_type,
-            status=Reservation.STATUS_CONFIRMED,
-            check_in_date__lt=data['check_out_date'],
-            check_out_date__gt=data['check_in_date']
-        ).count()
+        # overlapping_reservations = Reservation.objects.filter(
+        #     room_type=room_type,
+        #     status=Reservation.STATUS_CONFIRMED,
+        #     check_in_date__lt=data['check_out_date'],
+        #     check_out_date__gt=data['check_in_date']
+        # ).count()
 
-        if overlapping_reservations >= room_type.inventory:
-            raise serializers.ValidationError("متاسفانه در این بازه زمانی، اتاق خالی از این نوع وجود ندارد.")
+        # if overlapping_reservations >= room_type.inventory:
+        #     raise serializers.ValidationError("متاسفانه در این بازه زمانی، اتاق خالی از این نوع وجود ندارد.")
 
         return data
     
@@ -63,6 +63,13 @@ class HotelSerializer(serializers.ModelSerializer):
 
 class RoomTypeSerializer(serializers.ModelSerializer):
     hotel = HotelSerializer(read_only=True)
+
+    class Meta:
+        model = RoomType
+        fields = ['id', 'hotel', 'name', 'description', 'price_per_night', 'capacity', 'inventory']
+
+
+class RoomTypeCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RoomType
