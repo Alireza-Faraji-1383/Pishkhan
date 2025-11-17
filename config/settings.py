@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_spectacular',
+    'django_redis',
+    'cacheops',
 
     # local apps
     'users.apps.UsersConfig',
@@ -179,3 +181,30 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Tehran'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
+CACHEOPS_REDIS = "redis://127.0.0.1:6379/1"
+
+CACHEOPS_DEFAULTS = {
+    'timeout': 60 * 60  
+}
+
+CACHEOPS = {
+
+    'hotels.hotel': {'timeout': 60 * 30, 'ops': []},
+    'hotels.roomtype': {'timeout': 60 * 30, 'ops': []},
+
+}
+
+# admin-panel cacheops
+CACHEOPS_ENABLED = True

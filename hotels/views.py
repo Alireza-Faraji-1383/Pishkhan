@@ -83,7 +83,8 @@ class ReservationViewSet(StandardResponseMixin,mixins.CreateModelMixin,
 
 class HotelViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
-    queryset = Hotel.objects.all()
+    queryset = Hotel.objects.all(
+        ).cache(timeout =60*30 , ops = ['get','fetch'],)
     def get_serializer_class(self):
         if self.action == 'list':
             return HotelPreViewSerializer
@@ -95,7 +96,9 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RoomTypeViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
-    queryset = RoomType.objects.select_related('hotel').all()
+    def get_queryset(self):
+        return RoomType.objects.select_related('hotel').all(
+        ).cache(timeout =60*15 , ops = ['get','fetch'],).depends_on(Hotel)
     serializer_class = RoomTypeSerializer
     filter_backends = [ filters.SearchFilter, filters.OrderingFilter ]
     search_fields = ['name', 'hotel__name', 'hotel__city']
