@@ -3,21 +3,22 @@ from rest_framework import serializers
 from users.models import User, VerificationCode
 
 
-
 class EmailVerificationSerializer(serializers.Serializer):
+    """Serializer for requesting a verification code by email."""
+
     email = serializers.EmailField()
 
 
-
 class UserRegistrationSerializer(serializers.ModelSerializer):
+    """Serializer for completing user registration with a verification code."""
+
     code = serializers.CharField(write_only=True, max_length=6)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'code']
+        fields = ['email', 'first_name', 'last_name', 'password', 'code']
         extra_kwargs = {
             'password': {'write_only': True},
-            'username': {'required': True},
             'email': {'required': True},
             'code': {'write_only': True},
         }
@@ -27,39 +28,44 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         code = data.get('code')
 
         try:
-            verification_record = VerificationCode.objects.get(user__email=email, code=code, is_used=False)
+            verification_record = VerificationCode.objects.get(
+                user__email=email, code=code, is_used=False
+            )
             if verification_record.is_expired():
                 raise serializers.ValidationError({'code': 'کد تایید منقضی شده است.'})
-            
+
             self.context['verification_record'] = verification_record
         except VerificationCode.DoesNotExist:
             raise serializers.ValidationError({'code': 'کد تایید اشتباه است.'})
-        
+
         return data
 
     def create(self, validated_data):
-
         email = validated_data['email']
         user, _ = User.objects.get_or_create(email=email, defaults={'is_active': False})
-        
-        user.username = validated_data['username']
-        user.first_name = validated_data['first_name']
-        user.last_name = validated_data['last_name']
+
+        user.first_name = validated_data.get('first_name', '')
+        user.last_name = validated_data.get('last_name', '')
         user.set_password(validated_data['password'])
         user.is_active = True
         user.save()
-        
+
         verification_record = self.context['verification_record']
         verification_record.is_used = True
         verification_record.save()
-        
+
         return user
-    
+
 
 class UserMeSerializer(serializers.ModelSerializer):
+    """Serializer for retrieving and updating the current user's profile."""
+
     class Meta:
         model = User
-        exclude = ['is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions','last_login', 'date_joined']
+        exclude = [
+            'is_active', 'is_staff', 'is_superuser',
+            'groups', 'user_permissions', 'last_login', 'date_joined'
+        ]
         extra_kwargs = {
             'password': {'write_only': True},
             'role': {'read_only': True},
@@ -71,5 +77,4 @@ class UserMeSerializer(serializers.ModelSerializer):
         if password:
             instance.set_password(password)
             instance.save()
-            
         return instance

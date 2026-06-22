@@ -69,7 +69,7 @@ class Reservation(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"رزرو برای {self.user.username} در اتاق {self.room_type.name}"
+        return f"رزرو برای {self.user.email} در اتاق {self.room_type.name}"
 
 class Review(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews', verbose_name="کاربر")
@@ -89,4 +89,4 @@ class Review(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"نظر از {self.user.username} برای هتل {self.hotel.name}"
+        return f"نظر از {self.user.email} برای هتل {self.hotel.name}"

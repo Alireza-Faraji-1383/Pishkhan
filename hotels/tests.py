@@ -12,7 +12,7 @@ User = get_user_model()
 
 class ReviewModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.user = User.objects.create_user(email='testuser@example.com', password='testpass')
         self.hotel = Hotel.objects.create(
             owner=self.user,
             name='Test Hotel',
@@ -69,8 +69,8 @@ class ReviewModelTest(TestCase):
 
 class ReviewAPITest(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass', role='customer')
-        self.owner = User.objects.create_user(username='hotelowner', password='testpass', role='hotel_owner')
+        self.user = User.objects.create_user(email='testuser@example.com', password='testpass', role='customer')
+        self.owner = User.objects.create_user(email='hotelowner@example.com', password='testpass', role='hotel_owner')
         self.hotel = Hotel.objects.create(
             owner=self.owner,
             name='Test Hotel',
@@ -95,7 +95,7 @@ class ReviewAPITest(APITestCase):
 
     def test_create_review_with_reservation(self):
         """Test creating a review with a valid reservation"""
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(email='testuser@example.com', password='testpass')
         
         url = reverse('hotels:review-list')
         data = {
@@ -117,7 +117,7 @@ class ReviewAPITest(APITestCase):
         self.reservation.status = Reservation.STATUS_CONFIRMED
         self.reservation.save()
         
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(email='testuser@example.com', password='testpass')
         
         url = reverse('hotels:review-list')
         data = {
@@ -133,8 +133,8 @@ class ReviewAPITest(APITestCase):
     def test_create_review_without_any_reservation(self):
         """Test that a user cannot create a review without staying at the hotel"""
         # Create a different user who hasn't stayed at the hotel
-        other_user = User.objects.create_user(username='otheruser', password='testpass', role='customer')
-        self.client.login(username='otheruser', password='testpass')
+        other_user = User.objects.create_user(email='otheruser@example.com', password='testpass', role='customer')
+        self.client.login(email='otheruser@example.com', password='testpass')
         
         url = reverse('hotels:review-list')
         data = {
@@ -157,7 +157,7 @@ class ReviewAPITest(APITestCase):
             comment='Great hotel!'
         )
         
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(email='testuser@example.com', password='testpass')
         
         url = reverse('hotels:review-list')
         data = {
@@ -224,7 +224,7 @@ class ReviewAPITest(APITestCase):
             comment='Great hotel!'
         )
         
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(email='testuser@example.com', password='testpass')
         
         url = reverse('hotels:review-detail', kwargs={'pk': review.id})
         data = {
@@ -239,7 +239,7 @@ class ReviewAPITest(APITestCase):
 
     def test_update_other_users_review(self):
         """Test that a user cannot update another user's review"""
-        other_user = User.objects.create_user(username='otheruser', password='testpass', role='customer')
+        other_user = User.objects.create_user(email='otheruser@example.com', password='testpass', role='customer')
         review = Review.objects.create(
             user=other_user,
             hotel=self.hotel,
@@ -247,7 +247,7 @@ class ReviewAPITest(APITestCase):
             comment='Average hotel.'
         )
         
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(email='testuser@example.com', password='testpass')
         
         url = reverse('hotels:review-detail', kwargs={'pk': review.id})
         data = {
@@ -267,7 +267,7 @@ class ReviewAPITest(APITestCase):
             comment='Great hotel!'
         )
         
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(email='testuser@example.com', password='testpass')
         
         url = reverse('hotels:review-detail', kwargs={'pk': review.id})
         response = self.client.delete(url)
@@ -276,7 +276,7 @@ class ReviewAPITest(APITestCase):
 
     def test_delete_other_users_review(self):
         """Test that a user cannot delete another user's review"""
-        other_user = User.objects.create_user(username='otheruser', password='testpass', role='customer')
+        other_user = User.objects.create_user(email='otheruser@example.com', password='testpass', role='customer')
         review = Review.objects.create(
             user=other_user,
             hotel=self.hotel,
@@ -284,7 +284,7 @@ class ReviewAPITest(APITestCase):
             comment='Average hotel.'
         )
         
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(email='testuser@example.com', password='testpass')
         
         url = reverse('hotels:review-detail', kwargs={'pk': review.id})
         response = self.client.delete(url)
@@ -294,8 +294,8 @@ class ReviewAPITest(APITestCase):
 
 class HotelModelReviewMethodsTest(TestCase):
     def setUp(self):
-        self.user1 = User.objects.create_user(username='user1', password='testpass')
-        self.user2 = User.objects.create_user(username='user2', password='testpass')
+        self.user1 = User.objects.create_user(email='user1@example.com', password='testpass')
+        self.user2 = User.objects.create_user(email='user2@example.com', password='testpass')
         self.hotel = Hotel.objects.create(
             owner=self.user1,
             name='Test Hotel',
