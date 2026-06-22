@@ -14,20 +14,28 @@ from datetime import timedelta
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file (if present)
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h2_+w%1ge0$j9rnarzy=b*3hdg8-gf&=(j*-i0&78h0ct3(l+h'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-h2_+w%1ge0$j9rnarzy=b*3hdg8-gf&=(j*-i0&78h0ct3(l+h',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -125,7 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fa'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tehran'
 
 USE_I18N = True
 
@@ -174,8 +182,11 @@ CORS_ALLOW_CREDENTIALS = True
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+# Redis host (defaults to 'redis' for Docker, override with 'localhost' for local dev)
+REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:6379/0'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:6379/0'
 
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -185,7 +196,7 @@ CELERY_TIMEZONE = 'Asia/Tehran'
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": f'redis://{REDIS_HOST}:6379/1',
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -193,7 +204,7 @@ CACHES = {
 }
 
 
-CACHEOPS_REDIS = "redis://redis:6379/1"
+CACHEOPS_REDIS = f"redis://{REDIS_HOST}:6379/1"
 
 CACHEOPS_DEFAULTS = {
     'timeout': 60 * 60  
