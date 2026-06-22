@@ -18,6 +18,16 @@ class Hotel(models.Model):
     def __str__(self):
         return self.name
 
+    def average_rating(self):
+        """Calculate the average rating for the hotel"""
+        from django.db.models import Avg
+        avg = self.reviews.aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 2) if avg is not None else 0
+
+    def total_reviews(self):
+        """Get the total number of reviews for the hotel"""
+        return self.reviews.count()
+
 
 class RoomType(models.Model):
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='room_types', verbose_name="هتل")
@@ -61,21 +71,22 @@ class Reservation(models.Model):
     def __str__(self):
         return f"رزرو برای {self.user.username} در اتاق {self.room_type.name}"
 
-# class Review(models.Model):
-#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews', verbose_name="کاربر")
-#     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='reviews', verbose_name="هتل")
-#     reservation = models.OneToOneField(Reservation, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="رزرو مرتبط")
-#     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], verbose_name="امتیاز")
-#     comment = models.TextField(verbose_name="متن نظر")
-#     created_at = models.DateTimeField(auto_now_add=True)
+class Review(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews', verbose_name="کاربر")
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='reviews', verbose_name="هتل")
+    reservation = models.ForeignKey(Reservation, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviews', verbose_name="رزرو مرتبط")
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], verbose_name="امتیاز")
+    comment = models.TextField(verbose_name="متن نظر")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاریخ به‌روزرسانی")
 
-#     class Meta:
-#         verbose_name = "نظر"
-#         verbose_name_plural = "نظرات"
-#         constraints = [
-#             models.UniqueConstraint(fields=['user', 'hotel'], name='unique_review_per_user_hotel')
-#         ]
-#         ordering = ['-created_at']
+    class Meta:
+        verbose_name = "نظر"
+        verbose_name_plural = "نظرات"
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'hotel'], name='unique_review_per_user_hotel')
+        ]
+        ordering = ['-created_at']
 
-#     def __str__(self):
-#         return f"نظر از {self.user.username} برای هتل {self.hotel.name}"
+    def __str__(self):
+        return f"نظر از {self.user.username} برای هتل {self.hotel.name}"

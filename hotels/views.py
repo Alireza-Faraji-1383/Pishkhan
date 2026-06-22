@@ -9,8 +9,8 @@ from core.mixins import StandardResponseMixin
 from hotels.permissions import IsHotelAdmin
 from core.permissions import IsOwner
 
-from .models import Hotel, Reservation, RoomType
-from .serializers import HotelPreViewSerializer, HotelSerializer, ReservationSerializer, CreateReservationSerializer, RoomTypeCreateSerializer, RoomTypeSerializer
+from .models import Hotel, Reservation, RoomType, Review
+from .serializers import HotelPreViewSerializer, HotelSerializer, ReservationSerializer, CreateReservationSerializer, RoomTypeCreateSerializer, RoomTypeSerializer, ReviewSerializer, CreateReviewSerializer
 
 
 class ReservationViewSet(StandardResponseMixin,mixins.CreateModelMixin,
@@ -123,6 +123,59 @@ class RoomTypeAdminViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return RoomType.objects.filter(hotel__owner=self.request.user).select_related('hotel')
-    
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+
+class ReviewViewSet(StandardResponseMixin, 
+                   mixins.CreateModelMixin,
+                   mixins.RetrieveModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.DestroyModelMixin,
+                   mixins.ListModelMixin,
+                   viewsets.GenericViewSet):
+    """
+    ViewSet for managing reviews.
+    Allows authenticated users to create, read, update, and delete their own reviews.
+    """
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Review.objects.all().select_related('user', 'hotel')
+    
+    def get_serializer_class(self):
+        if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
+            return CreateReviewSerializer
+        return ReviewSerializer
+    
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # For update and delete, user must be the owner of the review
+            permission_classes = [permissions.IsAuthenticated, IsOwner]
+        elif self.action == 'create':
+            # For create, user must be authenticated
+            permission_classes = [permissions.IsAuthenticated]
+        else:
+            # For list and retrieve, allow anyone to read
+            permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+        
+        return [permission() for permission in permission_classes]
+    
+    def perform_create(self, serializer):
+        # Automatically set the user to the current user
+        serializer.save(user=self.request.user)
+    
+    def get_queryset(self):
+        """
+        Optionally restricts the returned reviews to a given hotel,
+        by filtering against a `hotel_id` query parameter in the URL.
+        """
+        queryset = Review.objects.all().select_related('user', 'hotel')
+        
+        hotel_id = self.request.query_params.get('hotel_id', None)
+        if hotel_id is not None:
+            queryset = queryset.filter(hotel_id=hotel_id)
+        
+        return queryset
