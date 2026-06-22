@@ -125,7 +125,7 @@ class RoomTypeAdminViewSet(viewsets.ModelViewSet):
         return RoomType.objects.filter(hotel__owner=self.request.user).select_related('hotel')
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        serializer.save()
 
 
 class ReviewViewSet(StandardResponseMixin, 
