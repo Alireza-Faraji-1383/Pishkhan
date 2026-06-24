@@ -2,7 +2,10 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class Hotel(models.Model):
+    """A hotel owned by a hotel_owner user."""
+
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='hotels', verbose_name="صاحب هتل")
     name = models.CharField(max_length=200, verbose_name="نام هتل")
     city = models.CharField(max_length=100, verbose_name="شهر")
@@ -19,17 +22,19 @@ class Hotel(models.Model):
         return self.name
 
     def average_rating(self):
-        """Calculate the average rating for the hotel"""
+        """Calculate the average rating across all reviews for this hotel."""
         from django.db.models import Avg
         avg = self.reviews.aggregate(Avg('rating'))['rating__avg']
         return round(avg, 2) if avg is not None else 0
 
     def total_reviews(self):
-        """Get the total number of reviews for the hotel"""
+        """Count the total number of reviews for this hotel."""
         return self.reviews.count()
 
 
 class RoomType(models.Model):
+    """A type of room available at a hotel, with pricing and inventory."""
+
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='room_types', verbose_name="هتل")
     name = models.CharField(max_length=100, verbose_name="نوع اتاق")
     description = models.TextField(blank=True, null=True, verbose_name="توضیحات")
@@ -46,6 +51,8 @@ class RoomType(models.Model):
 
 
 class Reservation(models.Model):
+    """A room reservation made by a user for a date range."""
+
     STATUS_PENDING = 'pending'
     STATUS_CONFIRMED = 'confirmed'
     STATUS_CANCELLED = 'cancelled'
@@ -71,7 +78,10 @@ class Reservation(models.Model):
     def __str__(self):
         return f"رزرو برای {self.user.email} در اتاق {self.room_type.name}"
 
+
 class Review(models.Model):
+    """A rating and comment left by a user for a hotel they have stayed at."""
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews', verbose_name="کاربر")
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='reviews', verbose_name="هتل")
     reservation = models.ForeignKey(Reservation, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviews', verbose_name="رزرو مرتبط")
